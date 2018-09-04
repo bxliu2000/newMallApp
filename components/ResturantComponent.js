@@ -3,7 +3,7 @@ import { View, Text } from 'react-native';
 
 class Restaurant extends Component {
     static navigationOptions = {
-        title: 'Restaurant Info'
+        title: 'Restaurants'
     }
     
     render() {
