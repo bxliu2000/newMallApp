@@ -5,7 +5,7 @@ export const restaurants = (state = {
     errMess: null,
     restaurants: [] }, action) => {
     switch (action.type) {
-        case ActionTypes.ADD:
+        case ActionTypes.ADD_RESTAURANTS:
             return { ...state, isLoading: false, errMess: null, restaurants: action.payload };
 
         case ActionTypes.RESTAURANTS_LOADING:
