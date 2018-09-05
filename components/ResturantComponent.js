@@ -41,6 +41,7 @@ class Restaurant extends Component {
     }
 
     render() {
+        const {navigate} = this.props.navigation;
         const renderRestaurantItem = ({item, index}) => {
             return(
                 <ListItem
@@ -68,7 +69,7 @@ class Restaurant extends Component {
                         containerStyle={{margin: 7}}
                     />}
                     bottomDivider={true}
-                   
+                    onPress={() => navigate('OrderScreen', {restaurantId: item.restaurantId})}
                 />
             );
         }
@@ -90,7 +91,7 @@ class Restaurant extends Component {
                     <FlatList
                         data = {this.props.restaurants.restaurants}
                         renderItem = {renderRestaurantItem}
-                        keyExtractor={item => item.id.toString()}
+                        keyExtractor={item => item.restaurantId.toString()}
                         />
                 </ScrollView>
             );

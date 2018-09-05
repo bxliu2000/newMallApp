@@ -4,6 +4,7 @@ import {createBottomTabNavigator, createStackNavigator} from 'react-navigation'
 import HomeScreen from "./HomeComponent";
 import Restaurant from './ResturantComponent';
 import PurchaseDetail from './PurchaseDetailComponent';
+import OrderScreen from './OrderComponent';
 
 
 const TabMainNavigator = createBottomTabNavigator({
@@ -44,6 +45,12 @@ const SuperHomeNavigator = createStackNavigator({
     },
     PurchaseDetail: {
         screen: PurchaseDetail,
+        navigationOptions: () => ({
+            tabBarVisible: false
+        })
+    },
+    OrderScreen: {
+        screen: OrderScreen,
         navigationOptions: () => ({
             tabBarVisible: false
         })
