@@ -1,5 +1,5 @@
 import React, { Component } from 'React';
-import { ScrollView, Text, FlatList, View } from 'react-native';
+import { ScrollView, Text, View, SectionList } from 'react-native';
 import { ListItem, Avatar, Rating, Badge } from 'react-native-elements';
 import { connect } from 'react-redux';
 import { baseUrl } from '../shared/baseUrl';
@@ -33,8 +33,39 @@ class OrderScreen extends Component {
         title: " "
     }
 
+
     render() {
-        const renderDishItem = ({item, index}) => {
+        const sectionData = this.props.dishes.dishes.reduce((acc, dish) => {
+            const foundIndex = acc.findIndex(el => el.category === dish.category);
+            if (foundIndex === -1) {
+                return [
+                    ...acc,
+                    {
+                        category: dish.category,
+                        data: [{
+                            dishName: dish.dishName,
+                            dishDescription: dish.dishDescription,
+                            price: dish.price, 
+                            salesPerMonth: dish.salesPerMonth,
+                            likes: dish.likes,
+                            image: dish.image
+                        }],
+                    },
+                ];
+            }
+            acc[foundIndex].data = [...acc[foundIndex].data, {
+                dishName: dish.dishName,
+                dishDescription: dish.dishDescription,
+                price: dish.price,
+                salesPerMonth: dish.salesPerMonth,
+                likes: dish.likes,
+                image: dish.image
+            }];
+            return acc;
+        }, []);
+
+
+        const renderDishItem = ({item, index, section}) => {
             return(
                 <ListItem
                     key={index}
@@ -42,8 +73,14 @@ class OrderScreen extends Component {
                     subtitle={item.dishDescription}
                 />  
             );
-            
         }
+
+        const renderSectionHeader = ({section: {category}}) => {
+            return(
+                <Text style={{ fontWeight: 'bold' }}>{category}</Text>
+            );
+        }
+
         if (this.props.dishes.isLoading) {
             return (
                 <ScrollView>
@@ -59,10 +96,11 @@ class OrderScreen extends Component {
         else {
             return (
                 <ScrollView>
-                    <FlatList
-                        data={this.props.dishes.dishes}
+                    <SectionList
+                        sections={sectionData}
                         renderItem={renderDishItem}
-                        keyExtractor={item => item.dishName.toString()}
+                        renderSectionHeader={renderSectionHeader}
+                        keyExtractor={item => item.dishName}
                     />
                     
                 </ScrollView>
