@@ -6,16 +6,28 @@ import { baseUrl } from '../shared/baseUrl';
 import { Loading } from './LoadingComponent';
 import { fetchDishes } from '../redux/ActionCreators'
 
-const HEADER_MAX_HEIGHT = 200;
+const HEADER_MAX_HEIGHT = 290;
 const HEADER_MIN_HEIGHT = 64;
 const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
-const screenHeight = Dimensions.get('window').height - 64;
 
 const mapStateToProps = state => {
     return{
         restaurants: state.restaurants,
         dishes: state.dishes
     }
+}
+function DiscountBadges(props) {
+    const labels = props.labels;
+    return (
+        labels.map((item) => (
+            <Badge
+                key={item}
+                value={item}
+                containerStyle={{ backgroundColor: '#FFF1F2', margin: 2, borderColor: 'red', borderWidth: 1 }}
+                textStyle={{ fontSize: 10, color: 'red' }}
+            />
+        ))
+    );
 }
 
 const mapDispatchToProps = (dispatch, ownProps) => ({
@@ -135,9 +147,19 @@ class OrderScreen extends Component {
         });
         const orderTranslate = this.state.scrollY.interpolate({
             inputRange: [0, HEADER_SCROLL_DISTANCE],
-            outputRange: [0, -140],
+            outputRange: [0, -226],
             extrapolate: 'clamp'
-        })
+        });
+        const cardTranslate = this.state.scrollY.interpolate({
+            inputRange: [0, HEADER_SCROLL_DISTANCE],
+            outputRange: [0, -200],
+            extrapolate: 'clamp'
+        });
+        const titleOpacity = this.state.scrollY.interpolate({
+            inputRange: [0, HEADER_SCROLL_DISTANCE],
+            outputRange: [-1, 1],
+            extrapolate: 'clamp'
+        });
 
 
         if (this.props.dishes.isLoading) {
@@ -155,35 +177,59 @@ class OrderScreen extends Component {
         else {
             return (
                 <View style = {styles.fill}>
-                <Animated.View style={[styles.scrollViewContent, {transform: [{translateY: orderTranslate}]}]}>
-                    <View>
-                        {categoryMenu}
-                    </View>
-                    <SectionList
-                        sections={sectionData}
-                        renderItem={renderDishItem}
-                        renderSectionHeader={renderSectionHeader}
-                        keyExtractor={item => item.dishName}
-                        ref={ref => this.sectionListRef = ref}
-                        scrollEventThrottle={16}
-                        onScroll={Animated.event(
-                            [{nativeEvent: {contentOffset: {y: this.state.scrollY}}}]
-                        )}
-                        style={{height: screenHeight}}
-                    />
-                </Animated.View>
-                <Animated.View style={[styles.header, {height: headerHeight}]}>
-                    <Animated.Image
-                        style={[
-                            styles.backgroundImage, 
-                            {opacity: imageOpacity, transform: [{translateY: imageTranslate}]},
-                        ]}
-                        source={{uri: baseUrl + restaurant.image}}
+                    <Animated.View style={[styles.header, { height: headerHeight }]}>
+                        <Animated.Image
+                            style={[
+                                styles.backgroundImage,
+                                { opacity: imageOpacity, transform: [{ translateY: imageTranslate }] },
+                            ]}
+                            source={{ uri: baseUrl + restaurant.image }}
                         />
-                    <View style={styles.bar}>
-                        <Text style={styles.title}>{restaurant.name}</Text>
-                    </View>
-                </Animated.View>
+                        <Animated.View style={[styles.bar, { opacity: titleOpacity }]}>
+                            <Text style={styles.title}>{restaurant.name}</Text>
+                        </Animated.View>
+                        <Animated.View style={[
+                            { opacity: imageOpacity, transform: [{ translateY: cardTranslate }] },
+                            ]}>
+                            <Card title={restaurant.name} titleStyle={{justifyContent:'flex-start'}}>
+                                <View style={{flexDirection: 'row', justifyContent:'space-between'}}>
+                                    <Avatar
+                                        source={{ uri: baseUrl + 'images/placeHolderLogo.png' }}
+                                        size={"large"}
+                                        activeOpacity={0.7}
+                                        avatarStyle={{ width: 100 }}
+                                    />
+                                    <View style={{ alignItems: 'flex-start', justifyContent: 'flex-start' }}>
+                                        <Rating
+                                            imageSize={15}
+                                            readonly
+                                            startingValue={restaurant.rating}
+                                        />
+                                        <Text style={{ color: 'grey'}}>{restaurant.description}</Text>
+                                        <View style={{ flexDirection: 'row'}}>
+                                            <DiscountBadges labels={restaurant.labels} />
+                                        </View>
+                                    </View>
+                                </View>
+                            </Card>
+                        </Animated.View>
+                    </Animated.View>
+                    <Animated.View style={[styles.scrollViewContent, {transform: [{translateY: orderTranslate}]}]}>
+                        <View>
+                            {categoryMenu}
+                        </View>
+                        <SectionList
+                            sections={sectionData}
+                            renderItem={renderDishItem}
+                            renderSectionHeader={renderSectionHeader}
+                            keyExtractor={item => item.dishName}
+                            ref={ref => this.sectionListRef = ref}
+                            scrollEventThrottle={16}
+                            onScroll={Animated.event(
+                                [{nativeEvent: {contentOffset: {y: this.state.scrollY}}}]
+                            )}
+                        />
+                    </Animated.View>
                 </View>
             );
         }
