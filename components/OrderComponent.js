@@ -1,5 +1,5 @@
 import React, { Component } from 'React';
-import { ScrollView, Text, View, SectionList } from 'react-native';
+import { ScrollView, Text, View, SectionList, FlatList } from 'react-native';
 import { ListItem, Avatar, Rating, Badge } from 'react-native-elements';
 import { connect } from 'react-redux';
 import { baseUrl } from '../shared/baseUrl';
@@ -33,6 +33,14 @@ class OrderScreen extends Component {
         title: " "
     }
 
+    scrollToCategory = (sectionData, category) => {
+        const sectionIndex = sectionData.findIndex(el => el.category === category);
+        this.sectionListRef.scrollToLocation({
+            animated: true,
+            itemIndex: 0,
+            sectionIndex: sectionIndex
+        });
+    }
 
     render() {
         const sectionData = this.props.dishes.dishes.reduce((acc, dish) => {
@@ -65,7 +73,7 @@ class OrderScreen extends Component {
         }, []);
 
 
-        const renderDishItem = ({item, index, section}) => {
+        const renderDishItem = ({item, index}) => {
             return(
                 <ListItem
                     key={index}
@@ -81,6 +89,17 @@ class OrderScreen extends Component {
             );
         }
 
+        const categoryMenu = sectionData.map((item, index) => {
+            return(
+                <ListItem
+                    title={item.category}
+                    key={index}
+                    style={{width: 100}}
+                    onPress={() => this.scrollToCategory(sectionData, item.category)}
+                    />
+            );
+        });
+
         if (this.props.dishes.isLoading) {
             return (
                 <ScrollView>
@@ -95,15 +114,18 @@ class OrderScreen extends Component {
         }
         else {
             return (
-                <ScrollView>
+                <View>
+                    {categoryMenu}
+                <ScrollView >
                     <SectionList
                         sections={sectionData}
                         renderItem={renderDishItem}
                         renderSectionHeader={renderSectionHeader}
                         keyExtractor={item => item.dishName}
+                        ref={ref => this.sectionListRef = ref}
                     />
-                    
                 </ScrollView>
+                </View>
             );
         }
     }
