@@ -52,7 +52,7 @@ const SuperHomeNavigator = createStackNavigator({
     OrderScreen: {
         screen: OrderScreen,
         navigationOptions: () => ({
-            tabBarVisible: false
+            tabBarVisible: false,
         })
     },
 }, {

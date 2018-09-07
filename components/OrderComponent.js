@@ -1,12 +1,15 @@
 import React, { Component } from 'React';
-import { ScrollView, Text, View, SectionList, FlatList, Dimensions } from 'react-native';
-import { ListItem, Avatar, Rating, Badge } from 'react-native-elements';
+import { ScrollView, Text, View, SectionList, Dimensions, Image, StyleSheet, Animated} from 'react-native';
+import { ListItem, Avatar, Rating, Badge, Card } from 'react-native-elements';
 import { connect } from 'react-redux';
 import { baseUrl } from '../shared/baseUrl';
 import { Loading } from './LoadingComponent';
 import { fetchDishes } from '../redux/ActionCreators'
 
-const screenHeight = Dimensions.get('window').height;
+const HEADER_MAX_HEIGHT = 200;
+const HEADER_MIN_HEIGHT = 64;
+const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
+const screenHeight = Dimensions.get('window').height - 64;
 
 const mapStateToProps = state => {
     return{
@@ -25,6 +28,9 @@ const mapDispatchToProps = (dispatch, ownProps) => ({
 class OrderScreen extends Component {
     constructor(props){
         super(props);
+        this.state ={
+            scrollY: new Animated.Value(0),
+        };
     }
 
     componentDidMount(){
@@ -32,8 +38,8 @@ class OrderScreen extends Component {
     }
 
     static navigationOptions = {
-        title: " "
-    }
+        header: null
+    };
 
     restructureData(data) {
         const sectionData = data.reduce((acc, dish) => {
@@ -67,7 +73,9 @@ class OrderScreen extends Component {
         return sectionData;
     }
 
+
     render() {
+        const restaurant = this.props.restaurants.restaurants[this.props.navigation.getParam('restaurantId', '')];
         const sectionData = this.restructureData(this.props.dishes.dishes);
         const categories = sectionData.reduce((acc, cur) => {
             return [
@@ -109,6 +117,29 @@ class OrderScreen extends Component {
             );
         });
 
+        //ANIMATION CONST
+        const headerHeight = this.state.scrollY.interpolate({
+            inputRange: [0, HEADER_SCROLL_DISTANCE],
+            outputRange: [HEADER_MAX_HEIGHT, HEADER_MIN_HEIGHT],
+            extrapolate: 'clamp'
+        });
+        const imageOpacity = this.state.scrollY.interpolate({
+            inputRange: [0, HEADER_SCROLL_DISTANCE / 2, HEADER_SCROLL_DISTANCE],
+            outputRange: [1, 1, 0],
+            extrapolate: 'clamp'
+        });
+        const imageTranslate = this.state.scrollY.interpolate({
+            inputRange: [0, HEADER_SCROLL_DISTANCE],
+            outputRange: [0, -50],
+            extrapolate: 'clamp'
+        });
+        const orderTranslate = this.state.scrollY.interpolate({
+            inputRange: [0, HEADER_SCROLL_DISTANCE],
+            outputRange: [0, -140],
+            extrapolate: 'clamp'
+        })
+
+
         if (this.props.dishes.isLoading) {
             return (
                 <ScrollView>
@@ -123,7 +154,8 @@ class OrderScreen extends Component {
         }
         else {
             return (
-                <View style={{flexDirection: 'row', alignItems:'flex-start'}}>
+                <View style = {styles.fill}>
+                <Animated.View style={[styles.scrollViewContent, {transform: [{translateY: orderTranslate}]}]}>
                     <View>
                         {categoryMenu}
                     </View>
@@ -133,11 +165,68 @@ class OrderScreen extends Component {
                         renderSectionHeader={renderSectionHeader}
                         keyExtractor={item => item.dishName}
                         ref={ref => this.sectionListRef = ref}
+                        scrollEventThrottle={16}
+                        onScroll={Animated.event(
+                            [{nativeEvent: {contentOffset: {y: this.state.scrollY}}}]
+                        )}
+                        style={{height: screenHeight}}
                     />
+                </Animated.View>
+                <Animated.View style={[styles.header, {height: headerHeight}]}>
+                    <Animated.Image
+                        style={[
+                            styles.backgroundImage, 
+                            {opacity: imageOpacity, transform: [{translateY: imageTranslate}]},
+                        ]}
+                        source={{uri: baseUrl + restaurant.image}}
+                        />
+                    <View style={styles.bar}>
+                        <Text style={styles.title}>{restaurant.name}</Text>
+                    </View>
+                </Animated.View>
                 </View>
             );
         }
     }
 }
 
+const styles = StyleSheet.create({
+    fill: {
+        flex: 1
+    },
+    header: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        backgroundColor: '#00A7E1',
+        overflow: 'hidden',
+    },
+    bar: {
+        marginTop: 28,
+        height: 32,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    title: {
+        backgroundColor: 'transparent',
+        color: 'white',
+        fontSize: 18,
+        marginBottom: 10
+    },
+    scrollViewContent: {
+        marginTop: HEADER_MAX_HEIGHT,
+        flexDirection: 'row', 
+        alignItems: 'flex-start'
+    },
+    backgroundImage: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        width: null,
+        height: HEADER_MAX_HEIGHT,
+        resizeMode: 'cover',
+    }
+})
 export default connect(mapStateToProps, mapDispatchToProps)(OrderScreen);

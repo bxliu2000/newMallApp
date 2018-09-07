@@ -87,13 +87,12 @@ class Restaurant extends Component {
         }
         else {
             return (
-                <ScrollView>
-                    <FlatList
-                        data = {this.props.restaurants.restaurants}
-                        renderItem = {renderRestaurantItem}
-                        keyExtractor={item => item.restaurantId.toString()}
-                        />
-                </ScrollView>
+                <FlatList
+                    data = {this.props.restaurants.restaurants}
+                    renderItem = {renderRestaurantItem}
+                    keyExtractor={item => item.restaurantId.toString()}
+                    />
+
             );
         }
     }
