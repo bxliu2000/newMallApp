@@ -1,10 +1,12 @@
 import React, { Component } from 'React';
-import { ScrollView, Text, View, SectionList, FlatList } from 'react-native';
+import { ScrollView, Text, View, SectionList, FlatList, Dimensions } from 'react-native';
 import { ListItem, Avatar, Rating, Badge } from 'react-native-elements';
 import { connect } from 'react-redux';
 import { baseUrl } from '../shared/baseUrl';
 import { Loading } from './LoadingComponent';
 import { fetchDishes } from '../redux/ActionCreators'
+
+const screenHeight = Dimensions.get('window').height;
 
 const mapStateToProps = state => {
     return{
@@ -33,17 +35,8 @@ class OrderScreen extends Component {
         title: " "
     }
 
-    scrollToCategory = (sectionData, category) => {
-        const sectionIndex = sectionData.findIndex(el => el.category === category);
-        this.sectionListRef.scrollToLocation({
-            animated: true,
-            itemIndex: 0,
-            sectionIndex: sectionIndex
-        });
-    }
-
-    render() {
-        const sectionData = this.props.dishes.dishes.reduce((acc, dish) => {
+    restructureData(data) {
+        const sectionData = data.reduce((acc, dish) => {
             const foundIndex = acc.findIndex(el => el.category === dish.category);
             if (foundIndex === -1) {
                 return [
@@ -53,7 +46,7 @@ class OrderScreen extends Component {
                         data: [{
                             dishName: dish.dishName,
                             dishDescription: dish.dishDescription,
-                            price: dish.price, 
+                            price: dish.price,
                             salesPerMonth: dish.salesPerMonth,
                             likes: dish.likes,
                             image: dish.image
@@ -71,7 +64,20 @@ class OrderScreen extends Component {
             }];
             return acc;
         }, []);
+        return sectionData;
+    }
 
+    render() {
+        const sectionData = this.restructureData(this.props.dishes.dishes);
+        const categories = sectionData.reduce((acc, cur) => {
+            return [
+                ...acc,
+                {
+                    category: cur.category,
+                    id: sectionData.findIndex(el => el.category === cur.category)
+                }
+            ];
+        }, []);
 
         const renderDishItem = ({item, index}) => {
             return(
@@ -89,13 +95,16 @@ class OrderScreen extends Component {
             );
         }
 
-        const categoryMenu = sectionData.map((item, index) => {
+        const categoryMenu = categories.map((item, index) => {
             return(
                 <ListItem
                     title={item.category}
                     key={index}
                     style={{width: 100}}
-                    onPress={() => this.scrollToCategory(sectionData, item.category)}
+                    onPress={() => this.sectionListRef.scrollToLocation({
+                        itemIndex: -1,
+                        sectionIndex: item.id
+                    })}
                     />
             );
         });
@@ -114,9 +123,10 @@ class OrderScreen extends Component {
         }
         else {
             return (
-                <View>
-                    {categoryMenu}
-                <ScrollView >
+                <View style={{flexDirection: 'row', alignItems:'flex-start'}}>
+                    <View>
+                        {categoryMenu}
+                    </View>
                     <SectionList
                         sections={sectionData}
                         renderItem={renderDishItem}
@@ -124,7 +134,6 @@ class OrderScreen extends Component {
                         keyExtractor={item => item.dishName}
                         ref={ref => this.sectionListRef = ref}
                     />
-                </ScrollView>
                 </View>
             );
         }
