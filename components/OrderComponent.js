@@ -6,9 +6,10 @@ import { baseUrl } from '../shared/baseUrl';
 import { Loading } from './LoadingComponent';
 import { fetchDishes } from '../redux/ActionCreators'
 
-const HEADER_MAX_HEIGHT = 290;
+const HEADER_MAX_HEIGHT = 240;
 const HEADER_MIN_HEIGHT = 64;
 const HEADER_SCROLL_DISTANCE = HEADER_MAX_HEIGHT - HEADER_MIN_HEIGHT;
+const screenHeight = Dimensions.get('window').height;
 
 const mapStateToProps = state => {
     return{
@@ -37,11 +38,41 @@ const mapDispatchToProps = (dispatch, ownProps) => ({
     }
 })
 
+function AboutRestaurantCard(props) {
+    const restaurant = props.restaurant;
+    return(
+        <View>
+        <Card title={restaurant.name} titleStyle={{ justifyContent: 'flex-start' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Avatar
+                    source={{ uri: baseUrl + 'images/placeHolderLogo.png' }}
+                    size={"large"}
+                    activeOpacity={0.7}
+                    avatarStyle={{ width: 100 }}
+                />
+                <View style={{ alignItems: 'flex-start', justifyContent: 'flex-start' }}>
+                    <Rating
+                        imageSize={15}
+                        readonly
+                        startingValue={restaurant.rating}
+                    />
+                    <Text style={{ color: 'grey' }}>{restaurant.description}</Text>
+                    <View style={{ flexDirection: 'row' }}>
+                        <DiscountBadges labels={restaurant.labels} />
+                    </View>
+                </View>
+            </View>
+        </Card>
+        </View>
+    );
+}
+
 class OrderScreen extends Component {
     constructor(props){
         super(props);
         this.state ={
-            scrollY: new Animated.Value(0),
+            scrollY: new Animated.Value(0), 
+            scrollEnabled: true
         };
     }
 
@@ -111,7 +142,9 @@ class OrderScreen extends Component {
 
         const renderSectionHeader = ({section: {category}}) => {
             return(
+                <View style={{ backgroundColor: '#C9FBFF'}}>
                 <Text style={{ fontWeight: 'bold' }}>{category}</Text>
+                </View>
             );
         }
 
@@ -136,23 +169,13 @@ class OrderScreen extends Component {
             extrapolate: 'clamp'
         });
         const imageOpacity = this.state.scrollY.interpolate({
-            inputRange: [0, HEADER_SCROLL_DISTANCE / 2, HEADER_SCROLL_DISTANCE],
-            outputRange: [1, 1, 0],
+            inputRange: [0, HEADER_SCROLL_DISTANCE],
+            outputRange: [1, 0],
             extrapolate: 'clamp'
         });
-        const imageTranslate = this.state.scrollY.interpolate({
+        const contentTranslate = this.state.scrollY.interpolate({
             inputRange: [0, HEADER_SCROLL_DISTANCE],
-            outputRange: [0, -50],
-            extrapolate: 'clamp'
-        });
-        const orderTranslate = this.state.scrollY.interpolate({
-            inputRange: [0, HEADER_SCROLL_DISTANCE],
-            outputRange: [0, -226],
-            extrapolate: 'clamp'
-        });
-        const cardTranslate = this.state.scrollY.interpolate({
-            inputRange: [0, HEADER_SCROLL_DISTANCE],
-            outputRange: [0, -200],
+            outputRange: [0, -HEADER_SCROLL_DISTANCE],
             extrapolate: 'clamp'
         });
         const titleOpacity = this.state.scrollY.interpolate({
@@ -176,45 +199,22 @@ class OrderScreen extends Component {
         }
         else {
             return (
-                <View style = {styles.fill}>
-                    <Animated.View style={[styles.header, { height: headerHeight }]}>
-                        <Animated.Image
-                            style={[
-                                styles.backgroundImage,
-                                { opacity: imageOpacity, transform: [{ translateY: imageTranslate }] },
-                            ]}
-                            source={{ uri: baseUrl + restaurant.image }}
-                        />
-                        <Animated.View style={[styles.bar, { opacity: titleOpacity }]}>
-                            <Text style={styles.title}>{restaurant.name}</Text>
-                        </Animated.View>
-                        <Animated.View style={[
-                            { opacity: imageOpacity, transform: [{ translateY: cardTranslate }] },
-                            ]}>
-                            <Card title={restaurant.name} titleStyle={{justifyContent:'flex-start'}}>
-                                <View style={{flexDirection: 'row', justifyContent:'space-between'}}>
-                                    <Avatar
-                                        source={{ uri: baseUrl + 'images/placeHolderLogo.png' }}
-                                        size={"large"}
-                                        activeOpacity={0.7}
-                                        avatarStyle={{ width: 100 }}
-                                    />
-                                    <View style={{ alignItems: 'flex-start', justifyContent: 'flex-start' }}>
-                                        <Rating
-                                            imageSize={15}
-                                            readonly
-                                            startingValue={restaurant.rating}
-                                        />
-                                        <Text style={{ color: 'grey'}}>{restaurant.description}</Text>
-                                        <View style={{ flexDirection: 'row'}}>
-                                            <DiscountBadges labels={restaurant.labels} />
-                                        </View>
-                                    </View>
-                                </View>
-                            </Card>
-                        </Animated.View>
+                <View style={styles.fill}>
+                    <Animated.View style={[styles.header, {height: headerHeight, opacity: titleOpacity}]}>
+                    <View style={styles.bar}>
+                        <Text style={styles.title}>{restaurant.name}</Text>
+                    </View>
                     </Animated.View>
-                    <Animated.View style={[styles.scrollViewContent, {transform: [{translateY: orderTranslate}]}]}>
+                    <Animated.Image
+                        style={[
+                            styles.backgroundImage, { opacity: imageOpacity, transform: [{ translateY: contentTranslate }] }
+                        ]}
+                        source={{ uri: baseUrl + restaurant.image }}
+                    />
+                    <Animated.View style={{ top: 30, opacity: imageOpacity, transform: [{ translateY: contentTranslate }] }}>
+                        <AboutRestaurantCard restaurant={restaurant} />
+                    </Animated.View>
+                    <Animated.View style={[styles.scrollViewContent, { transform: [{ translateY: contentTranslate}]} ]}>
                         <View>
                             {categoryMenu}
                         </View>
@@ -226,8 +226,9 @@ class OrderScreen extends Component {
                             ref={ref => this.sectionListRef = ref}
                             scrollEventThrottle={16}
                             onScroll={Animated.event(
-                                [{nativeEvent: {contentOffset: {y: this.state.scrollY}}}]
-                            )}
+                                    [{ nativeEvent: { contentOffset: { y: this.state.scrollY } } }])}
+                            showsVerticalScrollIndicator={false}
+                            style={{height: screenHeight-HEADER_MIN_HEIGHT}}
                         />
                     </Animated.View>
                 </View>
@@ -249,10 +250,11 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
     },
     bar: {
-        marginTop: 28,
-        height: 32,
+        flex: 0, 
+        height: HEADER_MIN_HEIGHT,
         alignItems: 'center',
-        justifyContent: 'center',
+        justifyContent: 'center', 
+        width: '100%'
     },
     title: {
         backgroundColor: 'transparent',
@@ -261,7 +263,7 @@ const styles = StyleSheet.create({
         marginBottom: 10
     },
     scrollViewContent: {
-        marginTop: HEADER_MAX_HEIGHT,
+        marginTop: HEADER_MIN_HEIGHT,
         flexDirection: 'row', 
         alignItems: 'flex-start'
     },
