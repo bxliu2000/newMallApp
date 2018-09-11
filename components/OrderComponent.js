@@ -71,7 +71,7 @@ function AboutRestaurantCard(props) {
 class OrderScreen extends Component {
     constructor(props){
         super(props);
-        this.state ={
+        this.state = {
             scrollY: new Animated.Value(0), 
             Order: [],
             Price: 0
@@ -133,8 +133,19 @@ class OrderScreen extends Component {
             dish.quantity++;
             this.setState({ Price: this.state.Price += item.price })
         }
-    }   
+    };
 
+    handleSubtract(dish, price) {
+        if (dish.quantity !== 1) {
+            dish.quantity--;
+            this.setState({ Price: this.state.Price - price });
+        }
+        else if (dish.quantity === 1) {
+            this.setState({ Price: this.state.Price - price });
+            const index = this.state.Order.findIndex(el => el.dishName === dish.dishName);
+            delete this.state.Order.splice(index, 1);
+        }
+    };
 
     render() {
         const restaurant = this.props.restaurants.restaurants[this.props.navigation.getParam('restaurantId', '')];
@@ -148,6 +159,26 @@ class OrderScreen extends Component {
                 }
             ];
         }, []);
+
+        const SubtractButton = (props) => {
+            const item = props.item;
+            const dish = this.state.Order.find(el => el.dishName === item.dishName);
+            if (dish != null) {
+                return(
+                    <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
+                        <Icon
+                            type='font-awesome'
+                            size={22}
+                            color={'grey'}
+                            name={'minus-circle'}
+                            onPress={()=> this.handleSubtract(dish, item.price)}
+                            />
+                        <Text>{dish.quantity}</Text>
+                    </View>
+                );
+            }
+            else return(<View></View>);
+        }
 
         const renderDishItem = ({item, index}) => {
             const subtitle =
@@ -166,13 +197,12 @@ class OrderScreen extends Component {
                             color={'red'} />
                         <Text style={{ fontSize: 18, color: 'red' }}>{item.price}<Text style={{fontSize: 12, color: 'grey'}}>/个</Text></Text>
                         </View>
-                        <Icon
-                            reverse
-                            raised
+                        <SubtractButton item ={item} />
+                        <Icon      
                             type='font-awesome'
-                            size={14}
+                            size={22}
                             color={'blue'}
-                            name={'plus'}
+                            name={'plus-circle'}
                             onPress={() => this.handleDish(item)}
                             />
                     </View>
@@ -227,8 +257,8 @@ class OrderScreen extends Component {
             extrapolate: 'clamp'
         });
         const imageOpacity = this.state.scrollY.interpolate({
-            inputRange: [0, HEADER_SCROLL_DISTANCE],
-            outputRange: [1, 0],
+            inputRange: [0, HEADER_SCROLL_DISTANCE/2,  HEADER_SCROLL_DISTANCE],
+            outputRange: [1, 0.8, 0],
             extrapolate: 'clamp'
         });
         const contentTranslate = this.state.scrollY.interpolate({
