@@ -1,6 +1,6 @@
 import React, { Component } from 'React';
 import { ScrollView, Text, View, SectionList, Dimensions, Image, StyleSheet, Animated} from 'react-native';
-import { ListItem, Avatar, Rating, Badge, Card } from 'react-native-elements';
+import { ListItem, Avatar, Rating, Badge, Card, Icon } from 'react-native-elements';
 import { connect } from 'react-redux';
 import { baseUrl } from '../shared/baseUrl';
 import { Loading } from './LoadingComponent';
@@ -67,12 +67,14 @@ function AboutRestaurantCard(props) {
     );
 }
 
+
 class OrderScreen extends Component {
     constructor(props){
         super(props);
         this.state ={
             scrollY: new Animated.Value(0), 
-            scrollEnabled: true
+            Order: [],
+            Price: 0
         };
     }
 
@@ -116,6 +118,23 @@ class OrderScreen extends Component {
         return sectionData;
     }
 
+    handleDish(item) {
+        if (!this.state.Order.some(el => el.dishName === item.dishName)) {
+            const orderObject = {
+                dishName: item.dishName,
+                quantity: 1,
+                requests: ''
+            }
+            this.setState({Order: this.state.Order.concat([orderObject])});
+            this.setState({Price: this.state.Price += item.price})
+        }
+        else {
+            const dish = this.state.Order.find(el => el.dishName === item.dishName);
+            dish.quantity++;
+            this.setState({ Price: this.state.Price += item.price })
+        }
+    }   
+
 
     render() {
         const restaurant = this.props.restaurants.restaurants[this.props.navigation.getParam('restaurantId', '')];
@@ -131,11 +150,49 @@ class OrderScreen extends Component {
         }, []);
 
         const renderDishItem = ({item, index}) => {
+            const subtitle =
+                    <View style={{justifyContent: 'flex-start' }}>
+                        <Text style={{ color: 'grey', fontSize: 12 }}>{item.dishDescription}</Text>
+                    <View style={{ flexDirection: 'row', margin: 5}}>
+                        <Text style={{ fontSize: 12 }}>月销:{item.salesPerMonth}</Text>
+                        <Text style={{ fontSize: 12, marginLeft: 10 }}>赞:{item.likes}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8}}>
+                        <View style={{flexDirection: 'row'}}>
+                        <Icon
+                            name={'cny'}
+                            type='font-awesome'
+                            size={16}
+                            color={'red'} />
+                        <Text style={{ fontSize: 18, color: 'red' }}>{item.price}<Text style={{fontSize: 12, color: 'grey'}}>/个</Text></Text>
+                        </View>
+                        <Icon
+                            reverse
+                            raised
+                            type='font-awesome'
+                            size={14}
+                            color={'blue'}
+                            name={'plus'}
+                            onPress={() => this.handleDish(item)}
+                            />
+                    </View>
+                    </View>
             return(
                 <ListItem
                     key={index}
                     title={item.dishName}
-                    subtitle={item.dishDescription}
+                    titleStyle={{fontSize: 16}}
+                    subtitleStyle={{fontSize: 14}}
+                    containerStyle={{ alignItems: 'flex-start', justifyContent: "flex-start", height: 150}}
+                    subtitle={subtitle}
+                    leftAvatar={<Avatar
+                        size={"large"}
+                        source={{ uri: baseUrl + item.image }}
+                        activeOpacity={0.7}
+                        avatarStyle={{ width: 100 }}
+                        containerStyle={{ margin: 7 }}
+                    />}
+                    bottomDivider={true}
                 />  
             );
         }
@@ -152,8 +209,9 @@ class OrderScreen extends Component {
             return(
                 <ListItem
                     title={item.category}
+                    titleStyle={{fontSize: 14}}
                     key={index}
-                    style={{width: 100}}
+                    style={{width: 80}}
                     onPress={() => this.sectionListRef.scrollToLocation({
                         itemIndex: -1,
                         sectionIndex: item.id
@@ -184,7 +242,7 @@ class OrderScreen extends Component {
             extrapolate: 'clamp'
         });
 
-
+        //DISPLAYED CONTENT
         if (this.props.dishes.isLoading) {
             return (
                 <ScrollView>
@@ -202,7 +260,7 @@ class OrderScreen extends Component {
                 <View style={styles.fill}>
                     <Animated.View style={[styles.header, {height: headerHeight, opacity: titleOpacity}]}>
                     <View style={styles.bar}>
-                        <Text style={styles.title}>{restaurant.name}</Text>
+                        <Text style={styles.title}>{restaurant.name}{this.state.Price}</Text>
                     </View>
                     </Animated.View>
                     <Animated.Image
