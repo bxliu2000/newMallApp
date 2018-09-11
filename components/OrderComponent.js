@@ -1,6 +1,6 @@
 import React, { Component } from 'React';
 import { ScrollView, Text, View, SectionList, Dimensions, Image, StyleSheet, Animated} from 'react-native';
-import { ListItem, Avatar, Rating, Badge, Card, Icon } from 'react-native-elements';
+import { ListItem, Avatar, Rating, Badge, Card, Icon, Button } from 'react-native-elements';
 import { connect } from 'react-redux';
 import { baseUrl } from '../shared/baseUrl';
 import { Loading } from './LoadingComponent';
@@ -168,7 +168,7 @@ class OrderScreen extends Component {
                     <View style={{flexDirection: 'row', justifyContent: 'space-between'}}>
                         <Icon
                             type='font-awesome'
-                            size={22}
+                            size={28}
                             color={'grey'}
                             name={'minus-circle'}
                             onPress={()=> this.handleSubtract(dish, item.price)}
@@ -200,7 +200,7 @@ class OrderScreen extends Component {
                         <SubtractButton item ={item} />
                         <Icon      
                             type='font-awesome'
-                            size={22}
+                            size={28}
                             color={'blue'}
                             name={'plus-circle'}
                             onPress={() => this.handleDish(item)}
@@ -290,7 +290,7 @@ class OrderScreen extends Component {
                 <View style={styles.fill}>
                     <Animated.View style={[styles.header, {height: headerHeight, opacity: titleOpacity}]}>
                     <View style={styles.bar}>
-                        <Text style={styles.title}>{restaurant.name}{this.state.Price}</Text>
+                        <Text style={styles.title}>{restaurant.name}</Text>
                     </View>
                     </Animated.View>
                     <Animated.Image
@@ -319,6 +319,23 @@ class OrderScreen extends Component {
                             style={{height: screenHeight-HEADER_MIN_HEIGHT}}
                         />
                     </Animated.View>
+                    <View style={styles.checkoutBar}>
+                        <Icon
+                            name={'cutlery'}
+                            type='font-awesome'
+                            size={40}
+                            color={'#359BFB'} />
+                        <View style={{flexDirection: "row"}}>
+                            <Text style={{color: 'white', fontSize: 25}}>总共：</Text>
+                            <Text style={{ color: 'white', fontSize: 27 }}>{this.state.Price}</Text>
+                            <Icon
+                                name={'cny'}
+                                type='font-awesome'
+                                size={24}
+                                color={'red'} />
+                        </View>
+                        <Button />
+                    </View>
                 </View>
             );
         }
@@ -363,6 +380,18 @@ const styles = StyleSheet.create({
         width: null,
         height: HEADER_MAX_HEIGHT,
         resizeMode: 'cover',
+    },
+    checkoutBar: {
+        backgroundColor: 'black', 
+        bottom: 20, 
+        position: "absolute", 
+        alignSelf: "center", 
+        width: '90%', 
+        height: 60,
+        opacity: 0.87, 
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center'
     }
 })
 export default connect(mapStateToProps, mapDispatchToProps)(OrderScreen);
